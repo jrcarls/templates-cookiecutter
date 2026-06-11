@@ -1,0 +1,9 @@
+{
+  "project_name": "Meu Projeto RPA",
+  "project_slug": "meu_projeto_rpa",
+  "description": "Robô de automação RPA",
+  "author": "Seu Nome",
+  "email": "seu@email.com",
+  "python_version": "3.12",
+  "use_database": ["no", "yes"]
+}

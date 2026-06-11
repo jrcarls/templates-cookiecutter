@@ -1,0 +1,9 @@
+{
+  "project_name": "Minha API",
+  "project_slug": "minha_api",
+  "description": "API construída com FastAPI",
+  "author": "Seu Nome",
+  "email": "seu@email.com",
+  "python_version": "3.12",
+  "use_database": ["yes", "no"]
+}
