@@ -25,18 +25,35 @@ uv run pytest
 
 ## Estrutura
 
+Organizada por domínio — cada domínio concentra suas próprias rotas, schemas, serviço e modelo.
+
 ```
 app/
-├── api/v1/
-│   ├── endpoints/   # Rotas organizadas por recurso
-│   └── router.py    # Agrega todos os endpoints
 ├── core/
-│   ├── config.py    # Settings via pydantic-settings
+│   ├── config.py       # Settings via pydantic-settings
 │   └── exceptions.py
 ├── db/
-│   └── session.py   # Engine e sessão SQLAlchemy
-├── models/          # Modelos ORM
-├── schemas/         # Schemas Pydantic (request/response)
-├── services/        # Lógica de negócio
-└── main.py          # Entrypoint FastAPI
+│   └── session.py      # Engine e sessão SQLAlchemy
+├── health/             # Domínio de exemplo
+│   ├── router.py
+│   ├── schemas.py
+│   └── service.py
+└── main.py             # Entrypoint FastAPI
+scaffold.py             # Gerador de novos domínios
+```
+
+## Adicionar um novo domínio
+
+```bash
+uv run python scaffold.py pedido
+```
+
+Cria `app/pedido/` com `router.py`, `schemas.py`, `service.py` e `models.py` (quando banco habilitado).
+
+Após gerar, registre o router em `app/main.py`:
+
+```python
+from app.pedido.router import router as pedido_router
+
+app.include_router(pedido_router, prefix="/api/v1/pedido", tags=["pedido"])
 ```
