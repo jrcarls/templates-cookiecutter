@@ -7,46 +7,78 @@ def create_domain(name: str) -> None:
     domain_path.mkdir(exist_ok=True)
 
     has_db = Path("app/db").exists()
+    cap = name.capitalize()
 
-    files: dict[str, str] = {
-        "__init__.py": "",
-        "router.py": f"""\
-from fastapi import APIRouter
-from app.{name}.service import {name.capitalize()}Service
+    if has_db:
+        router_content = f"""\
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.{name}.service import {cap}Service
 
 router = APIRouter()
-service = {name.capitalize()}Service()
+
+
+@router.get("")
+def list_{name}s(db: Session = Depends(get_db)):
+    return {cap}Service(db).get_all()
+"""
+        service_content = f"""\
+from sqlalchemy.orm import Session
+from app.{name}.repository import {cap}Repository
+from app.{name}.schemas import {cap}Response
+
+
+class {cap}Service:
+    def __init__(self, db: Session):
+        self.repository = {cap}Repository(db)
+
+    def get_all(self) -> list[{cap}Response]:
+        return self.repository.get_all()
+"""
+    else:
+        router_content = f"""\
+from fastapi import APIRouter
+from app.{name}.service import {cap}Service
+
+router = APIRouter()
+service = {cap}Service()
 
 
 @router.get("")
 def list_{name}s():
     return service.get_all()
-""",
+"""
+        service_content = f"""\
+from app.{name}.schemas import {cap}Response
+
+
+class {cap}Service:
+    def get_all(self) -> list[{cap}Response]:
+        return []
+"""
+
+    files: dict[str, str] = {
+        "__init__.py": "",
+        "router.py": router_content,
         "schemas.py": f"""\
 from pydantic import BaseModel
 
 
-class {name.capitalize()}Base(BaseModel):
+class {cap}Base(BaseModel):
     pass
 
 
-class {name.capitalize()}Create({name.capitalize()}Base):
+class {cap}Create({cap}Base):
     pass
 
 
-class {name.capitalize()}Response({name.capitalize()}Base):
+class {cap}Response({cap}Base):
     id: int
 
     model_config = {{"from_attributes": True}}
 """,
-        "service.py": f"""\
-from app.{name}.schemas import {name.capitalize()}Response
-
-
-class {name.capitalize()}Service:
-    def get_all(self) -> list[{name.capitalize()}Response]:
-        return []
-""",
+        "service.py": service_content,
     }
 
     if has_db:
@@ -55,10 +87,31 @@ from app.db.session import Base
 from sqlalchemy import Column, Integer, String
 
 
-class {name.capitalize()}(Base):
+class {cap}(Base):
     __tablename__ = "{name}s"
 
     id = Column(Integer, primary_key=True, index=True)
+"""
+        files["repository.py"] = f"""\
+from sqlalchemy.orm import Session
+from app.{name}.models import {cap}
+
+
+class {cap}Repository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_all(self) -> list[{cap}]:
+        return self.db.query({cap}).all()
+
+    def get_by_id(self, id: int) -> {cap} | None:
+        return self.db.query({cap}).filter({cap}.id == id).first()
+
+    def create(self, obj: {cap}) -> {cap}:
+        self.db.add(obj)
+        self.db.commit()
+        self.db.refresh(obj)
+        return obj
 """
 
     for filename, content in files.items():
