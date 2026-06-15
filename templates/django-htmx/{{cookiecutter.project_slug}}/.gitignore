@@ -15,3 +15,6 @@ wheels/
 # Django
 db.sqlite3
 staticfiles/
+
+# Tailwind binary
+config/static/css/tailwindcss
